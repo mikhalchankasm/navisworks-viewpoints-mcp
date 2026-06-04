@@ -28,15 +28,13 @@ MCP-сервер для работы с XML точек обзора Navisworks (
 Запуск сервера у всех клиентов одинаковый — команда `uvx` тянет пакет прямо из git и держит его в изолированном окружении:
 
 ```bash
-uvx --from git+https://github.com/<USER>/navisworks-viewpoints-mcp navisworks-viewpoints-mcp
+uvx --from git+https://github.com/mikhalchankasm/navisworks-viewpoints-mcp navisworks-viewpoints-mcp
 ```
-
-> Замените `<USER>` на ваш GitHub-аккаунт после публикации репозитория.
 
 Локальная разработка:
 
 ```bash
-git clone https://github.com/<USER>/navisworks-viewpoints-mcp
+git clone https://github.com/mikhalchankasm/navisworks-viewpoints-mcp
 cd navisworks-viewpoints-mcp
 uv sync --extra dev
 uv run pytest
@@ -57,7 +55,7 @@ uv run navisworks-viewpoints-mcp     # запустить сервер по stdi
 
 ## Подключение к клиентам
 
-Во всех примерах подставьте свой `<USER>` и реальные пути. Готовые файлы — в [`examples/configs/`](examples/configs).
+Во всех примерах подставьте реальные пути к вашим файлам. Готовые файлы — в [`examples/configs/`](examples/configs).
 
 ### Claude Code
 
@@ -68,7 +66,7 @@ uv run navisworks-viewpoints-mcp     # запустить сервер по stdi
   "mcpServers": {
     "navisworks-viewpoints": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/<USER>/navisworks-viewpoints-mcp", "navisworks-viewpoints-mcp"],
+      "args": ["--from", "git+https://github.com/mikhalchankasm/navisworks-viewpoints-mcp", "navisworks-viewpoints-mcp"],
       "env": {
         "NAVISWORKS_VIEWPOINTS_ROOT": "D:\\\\Path\\\\To\\\\Точки_обзора",
         "NAVISWORKS_MASTER_FILENAME": "Общие точки 16-04-2026.xml"
@@ -91,7 +89,7 @@ uv run navisworks-viewpoints-mcp     # запустить сервер по stdi
   "mcpServers": {
     "navisworks-viewpoints": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/<USER>/navisworks-viewpoints-mcp", "navisworks-viewpoints-mcp"],
+      "args": ["--from", "git+https://github.com/mikhalchankasm/navisworks-viewpoints-mcp", "navisworks-viewpoints-mcp"],
       "env": { "NAVISWORKS_MASTER": "D:\\\\...\\\\Общие точки 16-04-2026.xml" }
     }
   }
@@ -105,7 +103,7 @@ uv run navisworks-viewpoints-mcp     # запустить сервер по stdi
 ```toml
 [mcp_servers.navisworks-viewpoints]
 command = "uvx"
-args = ["--from", "git+https://github.com/<USER>/navisworks-viewpoints-mcp", "navisworks-viewpoints-mcp"]
+args = ["--from", "git+https://github.com/mikhalchankasm/navisworks-viewpoints-mcp", "navisworks-viewpoints-mcp"]
 env = { NAVISWORKS_MASTER = "D:\\\\...\\\\Общие точки 16-04-2026.xml" }
 ```
 
@@ -118,7 +116,7 @@ env = { NAVISWORKS_MASTER = "D:\\\\...\\\\Общие точки 16-04-2026.xml" 
   "mcp": {
     "navisworks-viewpoints": {
       "type": "local",
-      "command": ["uvx", "--from", "git+https://github.com/<USER>/navisworks-viewpoints-mcp", "navisworks-viewpoints-mcp"],
+      "command": ["uvx", "--from", "git+https://github.com/mikhalchankasm/navisworks-viewpoints-mcp", "navisworks-viewpoints-mcp"],
       "environment": { "NAVISWORKS_MASTER": "D:\\\\...\\\\Общие точки 16-04-2026.xml" }
     }
   }

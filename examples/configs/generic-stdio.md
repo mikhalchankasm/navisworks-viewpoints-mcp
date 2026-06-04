@@ -3,7 +3,7 @@
 Сервер общается по **stdio**. Любому MCP-клиенту нужно передать три вещи:
 
 - **command:** `uvx`
-- **args:** `["--from", "git+https://github.com/<USER>/navisworks-viewpoints-mcp", "navisworks-viewpoints-mcp"]`
+- **args:** `["--from", "git+https://github.com/mikhalchankasm/navisworks-viewpoints-mcp", "navisworks-viewpoints-mcp"]`
 - **env:** пути к данным Navisworks.
 
 ## Переменные окружения
@@ -22,7 +22,7 @@
 ```json
 {
   "command": "uvx",
-  "args": ["--from", "git+https://github.com/<USER>/navisworks-viewpoints-mcp", "navisworks-viewpoints-mcp"],
+  "args": ["--from", "git+https://github.com/mikhalchankasm/navisworks-viewpoints-mcp", "navisworks-viewpoints-mcp"],
   "env": {
     "NAVISWORKS_VIEWPOINTS_ROOT": "D:\\Path\\To\\Точки_обзора",
     "NAVISWORKS_MASTER_FILENAME": "Общие точки 16-04-2026.xml"
@@ -43,7 +43,7 @@
 ## Проверка вручную
 
 ```bash
-uvx --from git+https://github.com/<USER>/navisworks-viewpoints-mcp navisworks-viewpoints-mcp
+uvx --from git+https://github.com/mikhalchankasm/navisworks-viewpoints-mcp navisworks-viewpoints-mcp
 ```
 
 Сервер запустится и будет ждать MCP-сообщения на stdin (Ctrl+C для выхода).

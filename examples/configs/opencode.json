@@ -6,7 +6,7 @@
       "command": [
         "uvx",
         "--from",
-        "git+https://github.com/<USER>/navisworks-viewpoints-mcp",
+        "git+https://github.com/mikhalchankasm/navisworks-viewpoints-mcp",
         "navisworks-viewpoints-mcp"
       ],
       "enabled": true,
