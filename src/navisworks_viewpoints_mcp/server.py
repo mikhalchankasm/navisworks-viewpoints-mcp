@@ -123,7 +123,27 @@ def add_to_master(
 
 
 def main() -> None:
-    """Точка входа консольного скрипта navisworks-viewpoints-mcp."""
+    """Точка входа консольного скрипта navisworks-viewpoints-mcp.
+
+    Без аргументов — запуск MCP-сервера по stdio.
+    --check    напечатать текущую настройку путей (JSON) и выйти (для проверки установки).
+    --version  напечатать версию и выйти.
+    """
+    import sys
+
+    argv = sys.argv[1:]
+    if "--version" in argv or "-V" in argv:
+        from navisworks_viewpoints_mcp import __version__
+        print(__version__)
+        return
+    if "--check" in argv:
+        import json
+        cfg = config.current_config()
+        print(json.dumps(cfg, ensure_ascii=False, indent=2))
+        ok = bool(cfg["master_exists"] or cfg["root_exists"])
+        print("\nOK: пути найдены." if ok
+              else "\nВНИМАНИЕ: ни master, ни root не найдены — проверь env в конфиге клиента.")
+        return
     mcp.run()
 
 

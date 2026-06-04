@@ -4,6 +4,18 @@ MCP-сервер для работы с XML точек обзора Navisworks (
 
 Это портативная версия логики, которая раньше жила скриптами внутри проекта `navisworks-external-viewpoint-manage`. Теперь её можно поставить на любой машине одной строкой и подключить к Claude, Codex, Kimi, Cursor, Opencode и др.
 
+## ⚡ Быстрый старт через ИИ-агента
+
+Не хотите настраивать руками? Откройте чат своего агента (Cursor, Claude Code, Codex…) и дайте одну фразу:
+
+```text
+Прочитай https://raw.githubusercontent.com/mikhalchankasm/navisworks-viewpoints-mcp/main/SETUP_PROMPT.md
+и выполни инструкцию по установке MCP-сервера navisworks-viewpoints для моего клиента.
+Путь к мастер-файлу спроси у меня.
+```
+
+Агент сам определит клиент, пропишет конфиг (не трогая другие серверы), запустит и проверит сервер. Если агент не умеет открывать ссылки — скопируйте готовый промт из [`SETUP_PROMPT.md`](SETUP_PROMPT.md). Ручная настройка — ниже.
+
 ## Возможности (инструменты MCP)
 
 | Инструмент | Что делает |
@@ -38,7 +50,9 @@ git clone https://github.com/mikhalchankasm/navisworks-viewpoints-mcp
 cd navisworks-viewpoints-mcp
 uv sync --extra dev
 uv run pytest
-uv run navisworks-viewpoints-mcp     # запустить сервер по stdio
+uv run navisworks-viewpoints-mcp           # запустить сервер по stdio
+uv run navisworks-viewpoints-mcp --check   # проверить, что пути из env подхватились
+uv run navisworks-viewpoints-mcp --version
 ```
 
 ## Настройка путей (per-machine)
