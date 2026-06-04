@@ -91,6 +91,35 @@ def split_file(
 
 
 @mcp.tool()
+def affix_view_names(
+    xml: str, prefix: str = "", suffix: str = "",
+    folder: str | None = None, names: list[str] | None = None, backup: bool = True,
+) -> dict:
+    """Массово добавить префикс и/или суффикс к именам точек. Мастер не нужен.
+
+    folder — ограничить одной папкой (иначе весь файл). names — ограничить списком имён.
+    Затронутые папки пересортировываются, (N) пересчитывается. Нужно задать prefix и/или suffix.
+    """
+    return core.affix_view_names(
+        xml, prefix, suffix, folder=folder, names=names, backup=backup
+    )
+
+
+@mcp.tool()
+def export_tree(
+    xml: str, out: str | None = None, fmt: str = "html", include_views: bool = True,
+) -> dict:
+    """Сохранить дерево точек в файл для просмотра без Navisworks; вернуть путь к файлу.
+
+    fmt='html' — сворачиваемые узлы (<details>) + кнопки «развернуть/свернуть всё»;
+    fmt='text' или 'md' — текстовое дерево с отступами. include_views — показывать точки.
+    out=None — стабильный перезаписываемый файл во временной папке (<temp>/<имя>.tree.<ext>).
+    Счётчики у папок: [прямые/в поддереве]. Открой возвращённый путь в браузере.
+    """
+    return core.export_tree(xml, out, fmt, include_views=include_views)
+
+
+@mcp.tool()
 def merge_viewpoints(
     base: str, src: str, folder: str, new_guids: bool = True, backup: bool = True
 ) -> dict:

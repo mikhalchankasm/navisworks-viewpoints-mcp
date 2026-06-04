@@ -73,9 +73,9 @@ STEP 4. Verify the install with a deterministic command (do NOT run the server w
   If installing without env — the "paths not found" warning is NORMAL (the path is passed in requests).
 
 STEP 5. Tell me to restart/refresh the MCP list in the client and verify that "navisworks-viewpoints"
-  is active and these tools are visible: get_config, list_folders, list_views, sort_viewpoints,
-  dedupe_viewpoints, rename_folder, split_file, merge_viewpoints, move_views, audit_viewpoints,
-  reconcile_by_name, sync_lists, add_to_master.
+  is active and these tools are visible: get_config, list_folders, list_views, export_tree,
+  sort_viewpoints, dedupe_viewpoints, rename_folder, affix_view_names, split_file, merge_viewpoints,
+  move_views, audit_viewpoints, reconcile_by_name, sync_lists, add_to_master.
   If the client supports it — call get_config and show the result.
 
 STEP 6. Report briefly: which config file was changed, what path was written, what --check showed.
@@ -99,11 +99,13 @@ and follow it to install the navisworks-viewpoints MCP server for my client.
 After installing, in chat you can ask (the agent picks the tool itself):
 
 Any file (no master needed, path in the request):
+- "show the viewpoint tree as collapsible HTML" → `export_tree`
 - "sort the viewpoints in D:\…\export.xml" → `sort_viewpoints`
 - "remove duplicate viewpoints" → `dedupe_viewpoints`
 - "check the file for duplicate GUIDs/names" → `audit_viewpoints`
 - "show the folders and how many viewpoints" → `list_folders` / `list_views`
 - "rename a folder" → `rename_folder`
+- "add a prefix/suffix to viewpoint names" → `affix_view_names`
 - "move viewpoints 92, 95 from folder A to B" → `move_views`
 - "extract viewpoints into a separate file" → `split_file`
 - "add viewpoints from file1 into a folder of file2" → `merge_viewpoints`

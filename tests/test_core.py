@@ -134,6 +134,46 @@ def test_split_rejects_same_path(master: Path):
         core.split_file(master, ["191"], master)
 
 
+# --- affix / export_tree -------------------------------------------------- #
+def test_affix_prefix_suffix_all(master: Path):
+    res = core.affix_view_names(master, prefix="AX-", suffix="_v2")
+    assert res["renamed_count"] == 4
+    names = {v.get("name") for v in ET.parse(master).getroot().iter("view")}
+    assert "AX-92_v2" in names and "AX-397_v2" in names
+
+
+def test_affix_scoped_to_folder_and_names(master: Path):
+    res = core.affix_view_names(master, prefix="P", folder="ЛКП (2)", names=["397"])
+    assert res["renamed_count"] == 1
+    assert res["renamed"][0] == {"old": "397", "new": "P397"}
+
+
+def test_affix_requires_something(master: Path):
+    with pytest.raises(core.ViewpointError):
+        core.affix_view_names(master)
+
+
+def test_export_tree_html(master: Path, tmp_path: Path):
+    out = tmp_path / "tree.html"
+    res = core.export_tree(master, out, "html")
+    assert Path(res["out"]) == out and out.is_file()
+    txt = out.read_text(encoding="utf-8")
+    assert "<details" in txt and "ЛКП (2)" in txt and "<summary" in txt
+    assert "Свернуть всё" in txt
+
+
+def test_export_tree_text_default_temp(master: Path):
+    res = core.export_tree(master, None, "text")
+    p = Path(res["out"])
+    assert p.is_file() and p.suffix == ".txt"
+    assert "ЛКП (2)" in p.read_text(encoding="utf-8")
+
+
+def test_export_tree_bad_format(master: Path):
+    with pytest.raises(core.ViewpointError):
+        core.export_tree(master, None, "pdf")
+
+
 # --- list / audit --------------------------------------------------------- #
 def test_list_folders(master: Path):
     res = core.list_folders(master)

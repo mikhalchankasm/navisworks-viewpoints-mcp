@@ -36,12 +36,14 @@ All tools work with any file (path as an argument); where the path is optional, 
 
 | Tool | What it does | File |
 |---|---|---|
+| `export_tree` | Save the viewpoint tree to HTML (collapsible) / text to browse without Navisworks | any |
 | `sort_viewpoints` | Sort viewpoints in a file, recompute `(N)` (one folder or all) | any |
 | `dedupe_viewpoints` | Remove duplicates by name (within a folder) or GUID (globally) | any |
 | `audit_viewpoints` | Duplicate GUIDs, name/folder conflicts, counts | any |
 | `list_folders` | Folders in a file with view counts | any |
 | `list_views` | Viewpoints (name, guid) in a specific folder | any |
 | `rename_folder` | Rename a folder (recomputes `(N)`) | any |
+| `affix_view_names` | Add a prefix/suffix to viewpoint names (bulk) | any |
 | `move_views` | Move viewpoints by name between folders of one file (has `dry_run`) | any |
 | `split_file` | Extract viewpoints by name into a new file (copy or move) | any |
 | `merge_viewpoints` | Add views from one file into a folder of another (name clash = error) | any |
@@ -56,11 +58,13 @@ The server doesn't impose a single process — it's a set of operations. Typical
 
 ### A. Ad-hoc with a single file (no master needed)
 The most common case: open an arbitrary export and tidy it up.
+- "Show the viewpoint tree so I can browse without Navisworks" → `export_tree` (collapsible HTML; open the returned file in a browser)
 - "Sort the viewpoints in `D:\…\export.xml`" → `sort_viewpoints`
 - "Remove duplicate viewpoints" → `dedupe_viewpoints`
 - "Check the file for duplicate GUIDs and identical names" → `audit_viewpoints`
 - "Show the folders and how many viewpoints each has" → `list_folders` / `list_views`
 - "Rename folder `Folder 1` to `Floor 1`" → `rename_folder`
+- "Add the prefix `AX-` to all viewpoint names" → `affix_view_names`
 - "Move viewpoints 92, 95 from folder A to folder B" → `move_views`
 - "Extract viewpoints 100–105 into a separate file" → `split_file`
 

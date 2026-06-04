@@ -9,8 +9,10 @@
 from __future__ import annotations
 
 import copy
+import html
 import re
 import shutil
+import tempfile
 import uuid
 import xml.etree.ElementTree as ET
 from collections import Counter, defaultdict
@@ -521,6 +523,164 @@ def split_file(
         "extracted_count": len(selected), "missing": missing, "moved": move,
         "source": str(xml), "source_backup": bak,
     }
+
+
+def affix_view_names(
+    xml: Path, prefix: str = "", suffix: str = "", *,
+    folder: str | None = None, names: list[str] | None = None, backup: bool = True,
+) -> dict:
+    """Массово добавить префикс и/или суффикс к именам <view>. Работает с любым файлом.
+
+    folder=None  -> все точки файла; folder="A/B" -> только в этой папке.
+    names=[...]  -> ограничить указанными именами (до изменения).
+    После переименования затронутые папки пересортировываются, (N) пересчитывается.
+    """
+    prefix = prefix or ""
+    suffix = suffix or ""
+    if not prefix and not suffix:
+        raise ViewpointError("Нужно задать prefix и/или suffix")
+    xml = Path(xml)
+    bak = _backup(xml) if backup else None
+    _register_ns()
+    tree = load_tree(xml)
+    vp = find_viewpoints(tree.getroot())
+    if vp is None:
+        raise ViewpointError("Нет <viewpoints>")
+
+    name_filter = {n.strip() for n in names if n.strip()} if names else None
+
+    if folder is not None:
+        containers = [_resolve_folder(vp, folder)]
+    else:
+        containers = []
+        def collect(c: ET.Element) -> None:
+            containers.append(c)
+            for ch in c:
+                if ch.tag == "viewfolder":
+                    collect(ch)
+        collect(vp)
+
+    renamed: list[dict] = []
+    for cont in containers:
+        changed = False
+        for v in direct_views(cont):
+            old = v.get("name") or ""
+            if name_filter is not None and old not in name_filter:
+                continue
+            new = f"{prefix}{old}{suffix}"
+            if new == old:
+                continue
+            v.set("name", new)
+            renamed.append({"old": old, "new": new})
+            changed = True
+        if changed:
+            reorder_views(cont)
+
+    refresh_folder_counts(vp)
+    _write_tree(tree, xml)
+    return {"file": str(xml), "prefix": prefix, "suffix": suffix,
+            "renamed": renamed, "renamed_count": len(renamed), "backup": bak}
+
+
+_TREE_CSS = (
+    "body{font:14px/1.5 ui-monospace,Consolas,monospace;margin:1.2rem;color:#1b1f23;background:#fff}"
+    "h1{font-size:1.1rem}"
+    ".bar{margin:.4rem 0 1rem}"
+    "button{font:inherit;margin-right:.4rem;padding:.25rem .6rem;cursor:pointer}"
+    "details{margin-left:1.1rem}"
+    "summary{cursor:pointer;font-weight:600}"
+    ".c{color:#777;font-weight:400}"
+    ".v{margin-left:2.4rem;color:#0a7a33}"
+    ".meta{color:#888;font-size:.85rem;margin-bottom:1rem}"
+)
+
+
+def export_tree(
+    xml: Path, out: Path | None = None, fmt: str = "html", *, include_views: bool = True,
+) -> dict:
+    """Сохранить дерево точек обзора в файл для просмотра без Navisworks.
+
+    fmt: 'html' (сворачиваемые узлы <details> + кнопки развернуть/свернуть всё),
+         'text' (отступы), 'md' (markdown-список). include_views — показывать сами точки.
+    out=None -> стабильный перезаписываемый файл во временной папке
+                (<temp>/<имя>.tree.<ext>), путь возвращается в ответе.
+    Счётчики у папок: [прямые/в поддереве].
+    """
+    fmt = (fmt or "html").lower()
+    if fmt not in ("html", "text", "md"):
+        raise ViewpointError("fmt должен быть 'html', 'text' или 'md'")
+    xml = Path(xml)
+    tree = load_tree(xml)
+    vp = find_viewpoints(tree.getroot())
+    if vp is None:
+        raise ViewpointError("Нет <viewpoints>")
+
+    ext = {"html": "html", "text": "txt", "md": "md"}[fmt]
+    out = Path(out) if out is not None else Path(tempfile.gettempdir()) / f"{xml.stem}.tree.{ext}"
+
+    def sub(folder: ET.Element) -> int:
+        return len(iter_views(folder))
+
+    if fmt == "html":
+        def node(folder: ET.Element) -> str:
+            nm = html.escape(folder.get("name") or "")
+            parts = [f'<details open><summary>{nm} '
+                     f'<span class="c">[{len(direct_views(folder))}/{sub(folder)}]</span></summary>']
+            for ch in folder:
+                if ch.tag == "viewfolder":
+                    parts.append(node(ch))
+            if include_views:
+                for v in direct_views(folder):
+                    parts.append(f'<div class="v">{html.escape(v.get("name") or "")}</div>')
+            parts.append("</details>")
+            return "".join(parts)
+
+        body = [node(ch) for ch in vp if ch.tag == "viewfolder"]
+        if include_views:
+            body += [f'<div class="v">{html.escape(v.get("name") or "")}</div>'
+                     for v in direct_views(vp)]
+        content = (
+            f"<!doctype html><html lang='ru'><head><meta charset='utf-8'>"
+            f"<title>{html.escape(xml.name)} — дерево точек</title><style>{_TREE_CSS}</style></head>"
+            f"<body><h1>{html.escape(xml.name)}</h1>"
+            f"<div class='meta'>Источник: {html.escape(str(xml))} · всего точек: {len(iter_views(vp))} · "
+            f"счётчик [прямые/в поддереве]</div>"
+            f"<div class='bar'>"
+            f"<button onclick=\"document.querySelectorAll('details').forEach(d=>d.open=true)\">Развернуть всё</button>"
+            f"<button onclick=\"document.querySelectorAll('details').forEach(d=>d.open=false)\">Свернуть всё</button>"
+            f"</div>{''.join(body)}</body></html>"
+        )
+    else:
+        md = fmt == "md"
+        lines: list[str] = []
+
+        def walk(folder: ET.Element, depth: int) -> None:
+            ind = "  " * depth
+            bullet = "- " if md else ""
+            lines.append(f"{ind}{bullet}{folder.get('name') or ''} "
+                         f"[{len(direct_views(folder))}/{sub(folder)}]")
+            for ch in folder:
+                if ch.tag == "viewfolder":
+                    walk(ch, depth + 1)
+            if include_views:
+                vb = "- " if md else "• "
+                for v in direct_views(folder):
+                    lines.append(f"{ind}  {vb}{v.get('name') or ''}")
+
+        for ch in vp:
+            if ch.tag == "viewfolder":
+                walk(ch, 0)
+        if include_views:
+            vb = "- " if md else "• "
+            for v in direct_views(vp):
+                lines.append(f"{vb}{v.get('name') or ''}")
+        content = f"# {xml.name} — дерево точек\n\n" if md else f"{xml.name} — дерево точек\n\n"
+        content += "\n".join(lines) + "\n"
+
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(content, encoding="utf-8")
+    return {"file": str(xml), "out": str(out), "format": fmt,
+            "total_views": len(iter_views(vp))}
 
 
 def audit(xml: Path) -> dict:

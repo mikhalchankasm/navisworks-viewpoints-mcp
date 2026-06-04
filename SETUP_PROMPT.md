@@ -73,9 +73,9 @@
   Если ставишь без env — предупреждение «пути не найдены» это НОРМАЛЬНО (путь будешь передавать в запросах).
 
 ШАГ 5. Скажи мне перезапустить/обновить список MCP в клиенте и проверить, что сервер "navisworks-viewpoints"
-  активен и видны инструменты: get_config, list_folders, list_views, sort_viewpoints, dedupe_viewpoints,
-  rename_folder, split_file, merge_viewpoints, move_views, audit_viewpoints, reconcile_by_name,
-  sync_lists, add_to_master.
+  активен и видны инструменты: get_config, list_folders, list_views, export_tree, sort_viewpoints,
+  dedupe_viewpoints, rename_folder, affix_view_names, split_file, merge_viewpoints, move_views,
+  audit_viewpoints, reconcile_by_name, sync_lists, add_to_master.
   Если клиент это умеет — вызови get_config и покажи результат.
 
 ШАГ 6. Кратко отчитайся: какой конфиг-файл изменён, какой путь прописан, что показал --check.
@@ -100,11 +100,13 @@
 После установки в чате можно просить (агент сам выберет инструмент):
 
 Любой файл (мастер не нужен, путь — в запросе):
+- «покажи дерево точек в HTML (свернуть/развернуть)» → `export_tree`
 - «отсортируй точки в D:\…\выгрузка.xml» → `sort_viewpoints`
 - «убери дубли точек» → `dedupe_viewpoints`
 - «проверь файл на дубли GUID/имён» → `audit_viewpoints`
 - «покажи папки и сколько точек» → `list_folders` / `list_views`
 - «переименуй папку» → `rename_folder`
+- «добавь префикс/суффикс к именам точек» → `affix_view_names`
 - «перенеси точки 92, 95 из папки A в B» → `move_views`
 - «вытащи точки в отдельный файл» → `split_file`
 - «добавь точки из файла1 в папку файла2» → `merge_viewpoints`
