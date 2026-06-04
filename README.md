@@ -4,6 +4,16 @@ MCP-сервер для работы с XML точек обзора Navisworks (
 
 Это портативная версия логики, которая раньше жила скриптами внутри проекта `navisworks-external-viewpoint-manage`. Теперь её можно поставить на любой машине одной строкой и подключить к Claude, Codex, Kimi, Cursor, Opencode и др.
 
+## Установка в один клик
+
+[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=navisworks-viewpoints&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJnaXQraHR0cHM6Ly9naXRodWIuY29tL21pa2hhbGNoYW5rYXNtL25hdmlzd29ya3Mtdmlld3BvaW50cy1tY3AiLCJuYXZpc3dvcmtzLXZpZXdwb2ludHMtbWNwIl0sImVudiI6eyJOQVZJU1dPUktTX01BU1RFUiI6IlJFUExBQ0VfV0lUSF9GVUxMX1BBVEhfVE9fTUFTVEVSLnhtbCJ9fQ==)
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_MCP-007ACC?logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=navisworks-viewpoints&config=%7b%22name%22%3a%22navisworks-viewpoints%22%2c%22command%22%3a%22uvx%22%2c%22args%22%3a%5b%22--from%22%2c%22git%2bhttps%3a%2f%2fgithub.com%2fmikhalchankasm%2fnavisworks-viewpoints-mcp%22%2c%22navisworks-viewpoints-mcp%22%5d%2c%22env%22%3a%7b%22NAVISWORKS_MASTER%22%3a%22REPLACE_WITH_FULL_PATH_TO_MASTER.xml%22%7d%7d)
+
+> После клика клиент добавит сервер автоматически. Затем **впишите путь к мастер-файлу** в поле
+> `NAVISWORKS_MASTER` (в Cursor: Settings → MCP → navisworks-viewpoints → Edit; вместо
+> `REPLACE_WITH_FULL_PATH_TO_MASTER.xml` — полный путь к вашему `.xml`) и обновите список MCP.
+> Требуется установленный [uv](https://docs.astral.sh/uv/). Не хотите вписывать путь руками — используйте вариант через агента ниже.
+
 ## ⚡ Быстрый старт через ИИ-агента
 
 Не хотите настраивать руками? Откройте чат своего агента (Cursor, Claude Code, Codex…) и дайте одну фразу:
