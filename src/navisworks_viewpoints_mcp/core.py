@@ -375,6 +375,154 @@ def sort_file(xml: Path, folder: str | None = None, *, backup: bool = True) -> d
     return {"file": str(xml), "sorted": touched, "backup": bak}
 
 
+def dedupe(xml: Path, by: str = "name", *, backup: bool = True) -> dict:
+    """Удалить дубли <view>, оставляя первый. Работает с любым файлом.
+
+    by="name" — дубли по имени В ПРЕДЕЛАХ одной папки (одинаковое имя в одной папке);
+    by="guid" — дубли по GUID ГЛОБАЛЬНО по всему файлу (guid должен быть уникален).
+    """
+    if by not in ("name", "guid"):
+        raise ViewpointError("by должен быть 'name' или 'guid'")
+    xml = Path(xml)
+    bak = _backup(xml) if backup else None
+    _register_ns()
+    tree = load_tree(xml)
+    vp = find_viewpoints(tree.getroot())
+    if vp is None:
+        raise ViewpointError("Нет <viewpoints>")
+
+    removed: list[dict] = []
+    if by == "name":
+        def walk(container: ET.Element, path: str) -> None:
+            seen: set[str] = set()
+            for v in list(direct_views(container)):
+                nm = v.get("name") or ""
+                if nm in seen:
+                    container.remove(v)
+                    removed.append({"name": nm, "guid": v.get("guid"),
+                                    "folder": path or "(root)"})
+                else:
+                    seen.add(nm)
+            for ch in container:
+                if ch.tag == "viewfolder":
+                    nm = ch.get("name") or ""
+                    walk(ch, f"{path}/{nm}" if path else nm)
+        walk(vp, "")
+    else:  # guid, глобально
+        seen_g: set[str] = set()
+        def walk(container: ET.Element, path: str) -> None:
+            for v in list(direct_views(container)):
+                g = (v.get("guid") or "").strip()
+                if not g:
+                    continue
+                if g in seen_g:
+                    container.remove(v)
+                    removed.append({"name": v.get("name"), "guid": g,
+                                    "folder": path or "(root)"})
+                else:
+                    seen_g.add(g)
+            for ch in container:
+                if ch.tag == "viewfolder":
+                    nm = ch.get("name") or ""
+                    walk(ch, f"{path}/{nm}" if path else nm)
+        walk(vp, "")
+
+    refresh_folder_counts(vp)
+    _write_tree(tree, xml)
+    return {"file": str(xml), "by": by, "removed": removed,
+            "removed_count": len(removed), "backup": bak}
+
+
+def rename_folder(xml: Path, folder: str, new_name: str, *, backup: bool = True) -> dict:
+    """Переименовать viewfolder. Счётчик (N) пересчитывается автоматически.
+
+    folder — путь к существующей папке ('ЛКП (2)' или 'A/B').
+    new_name — новое имя (можно без '(N)' — суффикс добавится сам).
+    """
+    new_name = (new_name or "").strip()
+    if not new_name:
+        raise ViewpointError("Пустое новое имя")
+    xml = Path(xml)
+    bak = _backup(xml) if backup else None
+    _register_ns()
+    tree = load_tree(xml)
+    vp = find_viewpoints(tree.getroot())
+    if vp is None:
+        raise ViewpointError("Нет <viewpoints>")
+    f = _resolve_folder(vp, folder)
+    if f is vp:
+        raise ViewpointError("Нельзя переименовать корень <viewpoints>")
+    old = f.get("name")
+    f.set("name", new_name)
+    refresh_folder_counts(vp)
+    _write_tree(tree, xml)
+    return {"file": str(xml), "old_name": old, "new_name": f.get("name"), "backup": bak}
+
+
+def split_file(
+    xml: Path, names: list[str], out: Path, *,
+    folder: str | None = None, move: bool = False, backup: bool = True,
+) -> dict:
+    """Вытащить точки по именам в новый файл (копия nw-exchange).
+
+    names — список точных имён. folder — искать только в этой папке; None — по всему файлу.
+    move=False (по умолчанию) — копировать, исходник не трогать;
+    move=True — также удалить из исходника (с .bak и пересчётом (N)).
+    """
+    xml, out = Path(xml), Path(out)
+    if out.resolve() == xml.resolve():
+        raise ViewpointError("out совпадает с исходным файлом — укажи другой путь")
+    name_set = {n.strip() for n in names if n.strip()}
+    if not name_set:
+        raise ViewpointError("Пустой список имён")
+
+    _register_ns()
+    tree = load_tree(xml)
+    root = tree.getroot()
+    vp = find_viewpoints(root)
+    if vp is None:
+        raise ViewpointError("Нет <viewpoints>")
+
+    if folder is not None:
+        source = _resolve_folder(vp, folder)
+        candidates = direct_views(source)
+    else:
+        candidates = iter_views(vp)
+
+    selected = [v for v in candidates if (v.get("name") or "") in name_set]
+    found = {v.get("name") or "" for v in selected}
+    missing = sorted(name_set - found, key=_name_sort_key)
+    if not selected:
+        raise ViewpointError(f"Ни одна точка не найдена: {sorted(name_set, key=_name_sort_key)}")
+
+    # новый документ = копия корня (сохраняем атрибуты exchange и namespace), пустой viewpoints
+    new_root = copy.deepcopy(root)
+    new_vp = find_viewpoints(new_root)
+    for c in list(new_vp):
+        new_vp.remove(c)
+    for v in selected:
+        new_vp.append(copy.deepcopy(v))
+    reorder_views(new_vp)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    _write_tree(ET.ElementTree(new_root), out)
+
+    bak = None
+    if move:
+        bak = _backup(xml) if backup else None
+        for parent in vp.iter():
+            for c in list(parent):
+                if c in selected:
+                    parent.remove(c)
+        refresh_folder_counts(vp)
+        _write_tree(tree, xml)
+
+    return {
+        "written_file": str(out), "extracted": sorted(found, key=_name_sort_key),
+        "extracted_count": len(selected), "missing": missing, "moved": move,
+        "source": str(xml), "source_backup": bak,
+    }
+
+
 def audit(xml: Path) -> dict:
     """Структура папок, дубли guid, конфликты имя/папка, общее число view."""
     tree = load_tree(xml)

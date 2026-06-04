@@ -69,6 +69,71 @@ def test_sort_single_folder(master: Path):
     assert res["sorted"] == [{"folder": "ЛКП (2)", "views": 2}]
 
 
+# --- dedupe / rename / split --------------------------------------------- #
+def _make(tmp_path: Path, body: str, name: str = "f.xml") -> Path:
+    p = tmp_path / name
+    p.write_text(
+        "<?xml version='1.0' encoding='utf-8'?>"
+        '<exchange xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
+        'xsi:noNamespaceSchemaLocation="nw-exchange-12.0.xsd">'
+        f"<viewpoints>{body}</viewpoints></exchange>",
+        encoding="utf-8",
+    )
+    return p
+
+
+def test_dedupe_by_name_within_folder(tmp_path: Path):
+    src = _make(
+        tmp_path,
+        "<viewfolder name='A (0)'><view name='1' guid='a'/><view name='1' guid='b'/>"
+        "<view name='2' guid='c'/></viewfolder>",
+    )
+    res = core.dedupe(src, by="name")
+    assert res["removed_count"] == 1
+    folder = ET.parse(src).getroot().find("viewpoints").find("viewfolder")
+    assert [v.get("name") for v in folder] == ["1", "2"]
+    assert folder.get("name") == "A (2)"
+
+
+def test_dedupe_by_guid_global(tmp_path: Path):
+    src = _make(
+        tmp_path,
+        "<viewfolder name='A (0)'><view name='1' guid='dup'/></viewfolder>"
+        "<viewfolder name='B (0)'><view name='2' guid='dup'/></viewfolder>",
+    )
+    res = core.dedupe(src, by="guid")
+    assert res["removed_count"] == 1  # второй 'dup' удалён
+
+
+def test_rename_folder_recounts(master: Path):
+    res = core.rename_folder(master, "ЛКП (2)", "Открытые")
+    assert res["new_name"] == "Открытые (2)"
+
+
+def test_split_file_copy(master: Path, tmp_path: Path):
+    out = tmp_path / "sub.xml"
+    res = core.split_file(master, ["191", "397"], out, move=False)
+    assert set(res["extracted"]) == {"191", "397"}
+    assert out.is_file()
+    new_views = {v.get("name") for v in ET.parse(out).getroot().iter("view")}
+    assert new_views == {"191", "397"}
+    # исходник не тронут (move=False) — в ЛКП всё ещё 2
+    assert _folder_count(master, "ЛКП (") == 2
+
+
+def test_split_file_move_removes_from_source(master: Path, tmp_path: Path):
+    out = tmp_path / "sub.xml"
+    res = core.split_file(master, ["397"], out, move=True)
+    assert res["moved"] is True
+    assert _folder_count(master, "ЛКП (") == 1  # 397 ушёл
+    assert Path(res["source_backup"]).is_file()
+
+
+def test_split_rejects_same_path(master: Path):
+    with pytest.raises(core.ViewpointError):
+        core.split_file(master, ["191"], master)
+
+
 # --- list / audit --------------------------------------------------------- #
 def test_list_folders(master: Path):
     res = core.list_folders(master)

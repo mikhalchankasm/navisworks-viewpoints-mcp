@@ -56,6 +56,41 @@ def sort_viewpoints(xml: str, folder: str | None = None, backup: bool = True) ->
 
 
 @mcp.tool()
+def dedupe_viewpoints(xml: str, by: str = "name", backup: bool = True) -> dict:
+    """Удалить дубли точек обзора в файле (оставляя первый). Мастер не нужен.
+
+    by="name" — дубли по имени в пределах одной папки;
+    by="guid" — дубли по GUID глобально по всему файлу.
+    Возвращает список удалённых; счётчики (N) пересчитываются. backup — сделать xml.bak.
+    """
+    return core.dedupe(xml, by=by, backup=backup)
+
+
+@mcp.tool()
+def rename_folder(xml: str, folder: str, new_name: str, backup: bool = True) -> dict:
+    """Переименовать папку (viewfolder) в файле; счётчик (N) пересчитывается автоматически.
+
+    folder — путь к существующей папке ('ЛКП (2)' или 'A/B').
+    new_name — новое имя (можно без '(N)' — суффикс добавится сам).
+    """
+    return core.rename_folder(xml, folder, new_name, backup=backup)
+
+
+@mcp.tool()
+def split_file(
+    xml: str, names: list[str], out: str,
+    folder: str | None = None, move: bool = False, backup: bool = True,
+) -> dict:
+    """Вытащить точки по именам в новый файл (отдельная выгрузка nw-exchange).
+
+    names — список точных имён. folder — искать только в этой папке; иначе по всему файлу.
+    out — путь нового файла. move=False — копировать (исходник не трогать);
+    move=True — также удалить из исходника (с backup и пересчётом (N)).
+    """
+    return core.split_file(xml, names, out, folder=folder, move=move, backup=backup)
+
+
+@mcp.tool()
 def merge_viewpoints(
     base: str, src: str, folder: str, new_guids: bool = True, backup: bool = True
 ) -> dict:
