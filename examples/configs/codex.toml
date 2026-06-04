@@ -1,0 +1,8 @@
+# Добавить в ~/.codex/config.toml
+
+[mcp_servers.navisworks-viewpoints]
+command = "uvx"
+args = ["--from", "git+https://github.com/<USER>/navisworks-viewpoints-mcp", "navisworks-viewpoints-mcp"]
+
+[mcp_servers.navisworks-viewpoints.env]
+NAVISWORKS_MASTER = "D:\\Path\\To\\Точки_обзора\\Общие точки 16-04-2026.xml"

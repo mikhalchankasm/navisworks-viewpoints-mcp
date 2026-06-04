@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<exchange xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://download.autodesk.com/us/navisworks/schemas/nw-exchange-12.0.xsd" units="m" filename="model.nwf" filepath="C:\model.nwf">
+  <viewpoints>
+    <viewfolder name="Выгрузка" guid="11111111-0000-0000-0000-000000000000">
+      <view name="1552" guid="dddddddd-0000-0000-0000-000000001552"/>
+      <view name="1552.1" guid="dddddddd-0000-0000-0000-000000015521"/>
+    </viewfolder>
+    <view name="191" guid="eeeeeeee-0000-0000-0000-000000000191"/>
+  </viewpoints>
+</exchange>
