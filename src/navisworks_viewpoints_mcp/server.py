@@ -23,22 +23,36 @@ def get_config() -> dict:
 
 
 @mcp.tool()
-def list_folders(master: str | None = None) -> dict:
-    """Список папок (viewfolder) мастера: путь, число прямых view и view в поддереве.
+def list_folders(xml: str | None = None) -> dict:
+    """Список папок (viewfolder) в файле: путь, число прямых view и view в поддереве.
 
-    master — путь к XML; если не задан, берётся из env (NAVISWORKS_MASTER / ROOT+FILENAME).
+    xml — путь к любому .xml точек обзора. Если не задан, берётся мастер из env
+    (NAVISWORKS_MASTER / ROOT+FILENAME) — как удобный дефолт, не требование.
     """
-    return core.list_folders(config.require_master(master))
+    return core.list_folders(config.require_master(xml))
 
 
 @mcp.tool()
-def list_views(folder: str, master: str | None = None) -> dict:
+def list_views(folder: str, xml: str | None = None) -> dict:
     """Прямые <view> (имя, guid) в указанной папке.
 
-    folder — путь папки под <viewpoints>, например 'ЛКП (33)' или 'A/B'.
-    master — путь к XML; если не задан, берётся из env.
+    folder — путь папки под <viewpoints>, например 'ЛКП (33)' или 'A/B' (пусто = корень).
+    xml — путь к файлу; если не задан, берётся мастер из env.
     """
-    return core.list_views(config.require_master(master), folder)
+    return core.list_views(config.require_master(xml), folder)
+
+
+@mcp.tool()
+def sort_viewpoints(xml: str, folder: str | None = None, backup: bool = True) -> dict:
+    """Отсортировать точки обзора в файле и пересчитать счётчики (N) у папок.
+
+    Базовый ad-hoc сценарий: «открой файл, отсортируй точки» — мастер не нужен.
+    folder — путь папки под <viewpoints>; если не задан, сортируются ВСЕ папки
+    (и плоские view в корне). Сортировка по ведущему числу имени, затем по суффиксу
+    (1552, 1552.1, 1552_2); нечисловые имена — по алфавиту в конце.
+    backup — сделать xml.bak перед записью.
+    """
+    return core.sort_file(xml, folder, backup=backup)
 
 
 @mcp.tool()

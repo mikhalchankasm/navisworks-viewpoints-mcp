@@ -42,6 +42,33 @@ def test_sort_key_numeric_order():
     assert [e.get("name") for e in elems] == ["397", "1552", "1552.1", "1552_2"]
 
 
+# --- sort ----------------------------------------------------------------- #
+def test_sort_file_all_folders(tmp_path: Path):
+    src = tmp_path / "unsorted.xml"
+    src.write_text(
+        "<?xml version='1.0' encoding='utf-8'?>"
+        '<exchange xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
+        'xsi:noNamespaceSchemaLocation="nw-exchange-12.0.xsd">'
+        "<viewpoints><viewfolder name='Папка (0)'>"
+        "<view name='1552_2' guid='a'/><view name='397' guid='b'/>"
+        "<view name='1552' guid='c'/><view name='1552.1' guid='d'/>"
+        "</viewfolder></viewpoints></exchange>",
+        encoding="utf-8",
+    )
+    res = core.sort_file(src)
+    root = ET.parse(src).getroot()
+    folder = root.find("viewpoints").find("viewfolder")
+    names = [v.get("name") for v in folder if v.tag == "view"]
+    assert names == ["397", "1552", "1552.1", "1552_2"]
+    assert folder.get("name") == "Папка (4)"  # (N) пересчитан
+    assert Path(res["backup"]).is_file()
+
+
+def test_sort_single_folder(master: Path):
+    res = core.sort_file(master, folder="ЛКП (2)")
+    assert res["sorted"] == [{"folder": "ЛКП (2)", "views": 2}]
+
+
 # --- list / audit --------------------------------------------------------- #
 def test_list_folders(master: Path):
     res = core.list_folders(master)

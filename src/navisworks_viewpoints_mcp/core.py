@@ -337,6 +337,44 @@ def move_views(
             "from": from_path, "to": to_path, "backup": bak}
 
 
+def sort_file(xml: Path, folder: str | None = None, *, backup: bool = True) -> dict:
+    """Отсортировать <view> в файле и пересчитать (N). Работает с любым XML, не только мастером.
+
+    folder=None  -> сортировать все папки (и плоские view под <viewpoints>);
+    folder="A/B" -> только указанную папку.
+    Сортировка: по ведущему числу имени, затем по суффиксу (см. sort_key_view);
+    нечисловые имена — по алфавиту в конце.
+    """
+    xml = Path(xml)
+    bak = _backup(xml) if backup else None
+    _register_ns()
+    tree = load_tree(xml)
+    vp = find_viewpoints(tree.getroot())
+    if vp is None:
+        raise ViewpointError("Нет <viewpoints>")
+
+    touched: list[dict] = []
+    if folder is not None:
+        f = _resolve_folder(vp, folder)
+        reorder_views(f)
+        touched.append({"folder": folder or "(viewpoints)", "views": len(direct_views(f))})
+    else:
+        def walk_and_sort(container: ET.Element, path: str) -> None:
+            if direct_views(container):
+                reorder_views(container)
+                touched.append({"folder": path or "(viewpoints)",
+                                "views": len(direct_views(container))})
+            for ch in container:
+                if ch.tag == "viewfolder":
+                    nm = ch.get("name") or ""
+                    walk_and_sort(ch, f"{path}/{nm}" if path else nm)
+        walk_and_sort(vp, "")
+
+    refresh_folder_counts(vp)
+    _write_tree(tree, xml)
+    return {"file": str(xml), "sorted": touched, "backup": bak}
+
+
 def audit(xml: Path) -> dict:
     """Структура папок, дубли guid, конфликты имя/папка, общее число view."""
     tree = load_tree(xml)
